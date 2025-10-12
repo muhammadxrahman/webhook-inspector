@@ -78,3 +78,17 @@ cd frontend
 npm start
 ```
 **7. Open http://localhost:3000**
+
+## Usage
+
+1. Click **"Generate Endpoint"** to create a unique webhook URL
+2. Send webhooks to your generated URL:
+   - Use the built-in test button
+   - Send via cURL:
+```bash
+     curl -X POST <your-endpoint-url> \
+       -H "Content-Type: application/json" \
+       -d '{"test": "data"}'
+```
+   - Configure third-party services (Stripe, GitHub, etc.) to send webhooks to your URL
+3. Watch webhooks appear in real-time!
