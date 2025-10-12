@@ -85,7 +85,7 @@ npm start
 2. Send webhooks to your generated URL:
    - Use the built-in test button
    - Configure third-party services (Stripe, GitHub, etc.) to send webhooks to your URL
-   - Send via cURL:
+   - Send a test via cURL:
 ```bash
      curl -X POST <your-endpoint-url> \
        -H "Content-Type: application/json" \
