@@ -24,14 +24,14 @@ A real-time webhook inspection tool for developers. Receive, inspect, and debug 
 
 ## Project Structure
 webhook-inspector/
-├── backend/          # Express + Socket.IO server
-│   ├── server.js     # Main server file
-│   ├── db.js         # Database configuration
+├── backend/
+│   ├── server.js
+│   ├── db.js
 │   └── package.json
-├── frontend/         # React application
+├── frontend/
 │   ├── src/
-│   │   ├── App.js    # Main component
-│   │   └── App.css   # Styles
+│   │   ├── App.js
+│   │   └── App.css
 │   └── package.json
 └── README.md
 
@@ -47,7 +47,7 @@ webhook-inspector/
 
 1. Clone the repository:
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/muhammadxrahman/webhook-inspector.git
 cd webhook-inspector
 ```
 2. Install backend dependencies:
