@@ -23,17 +23,17 @@ A real-time webhook inspection tool for developers. Receive, inspect, and debug 
 - PostgreSQL
 
 ## Project Structure
-webhook-inspector/
-├── backend/
-│   ├── server.js
-│   ├── db.js
-│   └── package.json
-├── frontend/
-│   ├── src/
-│   │   ├── App.js
-│   │   └── App.css
-│   └── package.json
-└── README.md
+
+- **backend/** - Express + Socket.IO server
+  - `server.js` - Main server file
+  - `db.js` - Database configuration
+  - `package.json`
+- **frontend/** - React application
+  - `src/`
+    - `App.js` - Main component
+    - `App.css` - Styles
+  - `package.json`
+- `README.md`
 
 ## Getting Started
 
