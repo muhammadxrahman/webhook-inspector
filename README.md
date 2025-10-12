@@ -63,9 +63,10 @@ npm install
 **4. Set up environment variables:**
 
 Create a file called `.env` in the `backend` folder with the following content:
-
+```bash
 PORT=3001
 DATABASE_URL=postgresql://postgres:password@localhost:5432/webhook_inspector
+```
 **5. Start the backend:**
 ```bash
 cd backend
