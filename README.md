@@ -45,17 +45,17 @@ A real-time webhook inspection tool for developers. Receive, inspect, and debug 
 
 ### Installation
 
-1. Clone the repository:
+**1. Clone the repository:**
 ```bash
 git clone https://github.com/muhammadxrahman/webhook-inspector.git
 cd webhook-inspector
 ```
-2. Install backend dependencies:
+**2. Install backend dependencies:**
 ```bash
 cd backend
 npm install
 ```
-3. Install frontend dependencies:
+**3. Install frontend dependencies:**
 ```bash
 cd ../frontend
 npm install
@@ -66,14 +66,14 @@ Create a file called `.env` in the `backend` folder with the following content:
 
 PORT=3001
 DATABASE_URL=postgresql://postgres:password@localhost:5432/webhook_inspector
-5. Start the backend:
+**5. Start the backend:**
 ```bash
 cd backend
 npm run dev
 ```
-6. Start the frontend in another terminal:
+**6. Start the frontend in another terminal:**
 ```bash
 cd frontend
 npm start
 ```
-7. Open http://localhost:3000
+**7. Open http://localhost:3000**
