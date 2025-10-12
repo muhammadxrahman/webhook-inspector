@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
+const { pool, initDB } = require('./database');
 require('dotenv').config();
 
 const app = express();
@@ -104,8 +105,16 @@ app.post('/catch/:endpoint_id', (req, res) => {
     
 });
 
-// Start server
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log("Socket.IO ready");
-});
+// init db then start server
+initDB()
+  .then(() => {
+    server.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log("Socket.IO ready");
+      console.log('Database connected');
+    });
+  })
+  .catch((error) => {
+    console.error('Failed to initialize database: ', error);
+    process.exit(1);
+  })

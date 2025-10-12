@@ -18,7 +18,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "kill": "lsof -ti:3000 | xargs kill -9 2>/dev/null || true",
+    "restart": "npm run kill && npm start"
   },
   "eslintConfig": {
     "extends": [
