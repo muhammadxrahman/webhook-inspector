@@ -105,6 +105,57 @@ app.post('/catch/:endpoint_id', (req, res) => {
     
 });
 
+
+// generate new endpoint in db
+app.post('/api/endpoints/generate', async (req, res) => {
+  try {
+    const { endpoint_code } = req.body;
+    if (!endpoint_code) {
+      return res.status.json({
+        success: false,
+        message: 'endpoint_code is required'
+      });
+    }
+
+    // check if already exists
+    const existing = await pool.query(
+      'select * from endpoints where endpoint_code = $1',
+      [endpoint_code]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.json({ 
+        success: true, 
+        endpoint: existing.rows[0],
+        message: 'Endpoint already exists'
+      });
+    }
+
+    // create endpoint without user_id for temp anon
+    const result = await pool.query(
+      'INSERT INTO endpoints (endpoint_code) VALUES ($1) RETURNING *',
+      [endpoint_code]
+    );
+
+    console.log('Endpoint registered: ', endpoint_code);
+
+    res.json({ 
+      success: true, 
+      endpoint: result.rows[0],
+      message: 'Endpoint created'
+    });
+
+  } catch (error) {
+    console.error('Error when creating endpoint: ', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create endpoint',
+      error: error.message
+    });
+  }
+});
+
+
 // init db then start server
 initDB()
   .then(() => {
