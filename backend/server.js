@@ -3,10 +3,16 @@ const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
 const { pool, initDB } = require('./database');
+const authRoutes = require('./routes/auth');
+const { authenticateToken } = require('./middleware/auth');
+const { webhookRateLimit, endpointGenerationRateLimit, saveWebhookRateLimit } = require('./middleware/rateLimitMiddleware');
+
+
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
 // http server
 const server = http.createServer(app);
 // socket.io server
@@ -20,6 +26,7 @@ const io = new Server(server, {
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use('/api/auth', authRoutes);
 
 // store active connections per endpoint
 const connections = new Map();
@@ -74,8 +81,8 @@ app.get('/', (req, res) => {
     });
 });
 
-// Webhook endpoint
-app.post('/catch/:endpoint_id', (req, res) => {
+// webhook endpoint, rate limited
+app.post('/catch/:endpoint_id', webhookRateLimit, (req, res) => {
     const {endpoint_id} = req.params;
 
     const webhookData = {
@@ -106,43 +113,38 @@ app.post('/catch/:endpoint_id', (req, res) => {
 });
 
 
-// generate new endpoint in db
-app.post('/api/endpoints/generate', async (req, res) => {
+// generate new endpoint in db, 1 per user
+app.post('/api/endpoints/generate', authenticateToken, endpointGenerationRateLimit, async (req, res) => {
   try {
     const { endpoint_code } = req.body;
+    const userId = req.user.userId;
+
     if (!endpoint_code) {
-      return res.status.json({
+      return res.status(400).json({
         success: false,
         message: 'endpoint_code is required'
       });
     }
 
-    // check if already exists
-    const existing = await pool.query(
-      'select * from endpoints where endpoint_code = $1',
-      [endpoint_code]
+    // purge user's old endpoint data
+    await pool.query(
+      'DELETE FROM endpoints WHERE user_id = $1',
+      [userId]
     );
 
-    if (existing.rows.length > 0) {
-      return res.json({ 
-        success: true, 
-        endpoint: existing.rows[0],
-        message: 'Endpoint already exists'
-      });
-    }
+    console.log('Deleted old endpoint for user :', userId);
 
-    // create endpoint without user_id for temp anon
     const result = await pool.query(
-      'INSERT INTO endpoints (endpoint_code) VALUES ($1) RETURNING *',
-      [endpoint_code]
+      'INSERT INTO endpoints (endpoint_code, user_id) VALUES ($1, $2) RETURNING *',
+      [endpoint_code, userId]
     );
 
-    console.log('Endpoint registered: ', endpoint_code);
+    console.log('Endpoint registered: ', endpoint_code, 'for user: ', userId);
 
     res.json({ 
       success: true, 
       endpoint: result.rows[0],
-      message: 'Endpoint created'
+      message: 'Endpoint created (old endpoint deleted)'
     });
 
   } catch (error) {
@@ -155,6 +157,187 @@ app.post('/api/endpoints/generate', async (req, res) => {
   }
 });
 
+
+// save webhook to db (REQUIRES AUTH)
+app.post('/api/webhooks/save', authenticateToken, saveWebhookRateLimit, async (req, res) => {
+  try {
+    const { endpoint_code, headers, body, timestamp } = req.body;
+    const userId = req.user.userId;
+
+    if (!endpoint_code || !timestamp) {
+      return res.status(400).json({
+        success: false,
+        message: 'endpoint_code and timestamp are required'
+      });
+    }
+
+    // Get endpoint and verify ownership
+    const endpointResult = await pool.query(
+      'SELECT id FROM endpoints WHERE endpoint_code = $1 AND user_id = $2',
+      [endpoint_code, userId]
+    );
+
+    if (endpointResult.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Endpoint not found or you do not have permission.' 
+      });
+    }
+
+    const endpoint_id = endpointResult.rows[0].id;
+
+    // Check saved webhook count (MAX 10)
+    const countResult = await pool.query(
+      'SELECT COUNT(*) FROM saved_webhooks WHERE endpoint_id = $1',
+      [endpoint_id]
+    );
+
+    const savedCount = parseInt(countResult.rows[0].count);
+
+    if (savedCount >= 10) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Maximum 10 saved webhooks per endpoint. Delete old ones first.' 
+      });
+    }
+
+    // Check if already saved
+    const existing = await pool.query(
+      'SELECT * FROM saved_webhooks WHERE endpoint_id = $1 AND timestamp = $2',
+      [endpoint_id, timestamp]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.json({ 
+        success: true, 
+        message: 'Webhook already saved',
+        webhook: existing.rows[0]
+      });
+    }
+
+    // Save webhook with user_id
+    const result = await pool.query(
+      `INSERT INTO saved_webhooks (endpoint_id, user_id, headers, body, timestamp)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [endpoint_id, userId, JSON.stringify(headers), JSON.stringify(body), timestamp]
+    );
+
+    console.log('Webhook saved to database');
+
+    res.json({ 
+      success: true, 
+      message: 'Webhook saved',
+      webhook: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error saving webhook:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to save webhook',
+      error: error.message
+    });
+  }
+});
+
+// deprecated 
+app.get('/api/webhooks/saved/:endpoint_code', async (req, res) => {
+  try {
+    const { endpoint_code } = req.params;
+
+    const result = await pool.query(
+      `SELECT sw.* 
+       FROM saved_webhooks sw
+       JOIN endpoints e ON sw.endpoint_id = e.id
+       WHERE e.endpoint_code = $1
+       ORDER BY sw.saved_at DESC`,
+      [endpoint_code]
+    );
+
+    res.json({ 
+      success: true, 
+      count: result.rows.length,
+      webhooks: result.rows 
+    });
+  } catch (error) {
+    console.error('Error fetching saved webhooks:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch saved webhooks',
+      error: error.message 
+    });
+  }
+});
+
+
+// get user's current endpoint
+app.get('/api/endpoints/my-endpoint', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const result = await pool.query(
+      'SELECT * FROM endpoints WHERE user_id = $1 AND is_active = true',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({ 
+        success: true, 
+        endpoint: null,
+        message: 'No endpoint found'
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      endpoint: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error fetching endpoint:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch endpoint',
+      error: error.message 
+    });
+  }
+});
+
+
+// Delete a saved webhook (REQUIRES AUTH)
+app.delete('/api/webhooks/:webhook_id', authenticateToken, async (req, res) => {
+  try {
+    const { webhook_id } = req.params;
+    const userId = req.user.userId;
+
+    // Verify ownership before deleting
+    const result = await pool.query(
+      'DELETE FROM saved_webhooks WHERE id = $1 AND user_id = $2 RETURNING *',
+      [webhook_id, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Webhook not found or you do not have permission to delete it' 
+      });
+    }
+
+    console.log('Webhook deleted:', webhook_id);
+
+    res.json({ 
+      success: true, 
+      message: 'Webhook deleted'
+    });
+
+  } catch (error) {
+    console.error('Error deleting webhook:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to delete webhook',
+      error: error.message 
+    });
+  }
+});
 
 // init db then start server
 initDB()
