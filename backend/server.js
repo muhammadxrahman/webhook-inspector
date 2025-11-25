@@ -19,19 +19,21 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: process.env.NODE_ENV === 'production'
-      ? process.env.FRONTEND_URL || '*'
+      ? [process.env.FRONTEND_URL, '*']
       : 'http://localhost:3000',
-    methods: ['GET', 'POST']
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 
 // CORS configuration
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? process.env.FRONTEND_URL || '*'  // set in railway
+    ? [process.env.FRONTEND_URL, '*']  // Allow both frontend and webhooks
     : 'http://localhost:3000',
-  methods: ['GET', 'POST', 'DELETE'],
-  credentials: true
+  methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
 
 
