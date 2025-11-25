@@ -1,14 +1,18 @@
+# LIVE SITE DEPLOYED: https://webhook-inspector-nine.vercel.app/
+
 # 🎯 Webhook Inspector
 
 A real-time webhook inspection tool for developers. Receive, inspect, and debug webhooks during development.
 
 ## Features
 
-- 🚀 **Instant endpoint generation** - Get a public URL in one click
-- ⚡ **Real-time updates** - See webhooks as they arrive via WebSockets
-- 📦 **Complete inspection** - View headers, body, and timestamps
-- 🧪 **Built-in testing** - Send test webhooks directly from the UI
-- 💾 **Save functionality** - Persist important webhooks
+- **Instant endpoint generation** - Get a public URL in one click
+- **Real-time updates** - See webhooks as they arrive via WebSockets
+- **Complete inspection** - View headers, body, and timestamps
+- **Built-in testing** - Send test webhooks directly from the UI
+- **Save functionality** - Persist important webhooks
+- **Rate limits** - Reasonable rate limits of features
+- **Authentication and Authorization** - User accounts with webhook data ownership
 
 ## Tech Stack
 
@@ -21,6 +25,10 @@ A real-time webhook inspection tool for developers. Receive, inspect, and debug 
 - Node.js + Express
 - Socket.IO
 - PostgreSQL
+
+**Deployment:**
+- Railway
+- Vercel
 
 ## Project Structure
 
@@ -82,8 +90,9 @@ npm start
 
 ## Usage
 
-1. Click **"Generate Endpoint"** to create a unique webhook URL
-2. Send webhooks to your generated URL:
+1. Register an account
+2. Click **"Generate Endpoint"** to create a unique webhook URL
+3. Send webhooks to your generated URL:
    - Use the built-in test button
    - Configure third-party services (Stripe, GitHub, etc.) to send webhooks to your URL
    - Send a test via cURL:
@@ -92,4 +101,5 @@ npm start
        -H "Content-Type: application/json" \
        -d '{"test": "data"}'
 ```
-3. Watch webhooks appear in real-time!
+4. Watch webhooks appear in real-time!
+5. Save specific webhooks for persistent data and delete them whenever!

@@ -331,7 +331,7 @@ function App() {
             <button onClick={sendTestWebhook} className="btn-test">
               Send Test Webhook
             </button>
-            <p className="hint">Or send a POST request to your endpoint from any tool</p>
+            <p className="hint">Or send a POST request to your endpoint from any tool, including cURL!</p>
           </div>
         )}
 
