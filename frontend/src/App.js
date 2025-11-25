@@ -5,7 +5,9 @@ import './App.css';
 import { useAuth } from './AuthContext';
 import Auth from './Auth';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://webhook-inspector-production-2c87.up.railway.app';
+const API_URL = window.location.hostname === 'localhost'
+  ? 'http://localhost:3001'
+  : 'https://webhook-inspector-production-2c87.up.railway.app';
 
 function App() {
 
