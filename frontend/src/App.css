@@ -244,6 +244,8 @@ button {
 
 /* Connection Status */
 .connection-status {
+  display: flex;
+  justify-content: center;
   margin-top: 10px;
   font-size: 14px;
 }

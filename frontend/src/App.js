@@ -291,13 +291,13 @@ function App() {
         <div className="header-actions">
           <span>Welcome, {user.username}!</span>
           <button onClick={logout} className="btn-logout">Logout</button>
-          <div className="connection-status">
-            {isConnected ? (
-              <span className="status-connected">🟢 Connected</span>
-            ) : (
-              <span className="status-disconnected">🔴 Disconnected</span>
-            )}
-          </div>
+        </div>
+        <div className="connection-status">
+          {isConnected ? (
+            <span className="status-connected">🟢 Connected</span>
+          ) : (
+            <span className="status-disconnected">🔴 Disconnected</span>
+          )}
         </div>
       </header>
       

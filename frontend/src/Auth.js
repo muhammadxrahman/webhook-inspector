@@ -42,6 +42,10 @@ function Auth() {
 
   return (
     <div className="auth-container">
+      <header className="auth-header">
+        <h1>Webhook Inspector 🎯</h1>
+        <p>Receive and inspect webhooks in real-time</p>
+      </header>
       <div className="auth-box">
         <h2>{isLogin ? 'Login' : 'Register'}</h2>
         
