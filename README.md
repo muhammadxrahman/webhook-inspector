@@ -66,6 +66,7 @@ Create a file called `.env` in the `backend` folder with the following content:
 ```bash
 PORT=3001
 DATABASE_URL=postgresql://postgres:password@localhost:5432/webhook_inspector
+JWT_SECRET=<your-random-jwt-secret-string>
 ```
 **5. Start the backend:**
 ```bash
