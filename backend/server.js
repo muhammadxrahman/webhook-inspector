@@ -18,45 +18,20 @@ const server = http.createServer(app);
 // socket.io server
 const io = new Server(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'production'
-      ? [process.env.FRONTEND_URL, '*']
-      : 'http://localhost:3000',
-    methods: ['GET', 'POST'],
+    origin: true,  // Allow all origins
     credentials: true
   }
 });
 
-// CORS configuration - allow frontend and all webhook sources
-const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [process.env.FRONTEND_URL, /\.vercel\.app$/]  // Allow Vercel domains
-  : ['http://localhost:3000'];
-
-const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps, curl, Postman)
-    if (!origin) return callback(null, true);
-    
-    // Check if origin matches allowed patterns
-    const isAllowed = allowedOrigins.some(allowed => {
-      if (typeof allowed === 'string') return allowed === origin;
-      if (allowed instanceof RegExp) return allowed.test(origin);
-      return false;
-    });
-    
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization']
-};
-
 
 // Middleware
-app.use(cors(corsOptions));
+// CORS configuration - allow all origins (webhooks can come from anywhere)
+app.use(cors({
+  origin: true,  // Allow all origins
+  credentials: true,
+  methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 
