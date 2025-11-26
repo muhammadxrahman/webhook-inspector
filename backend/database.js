@@ -30,6 +30,7 @@ const initDB = async () => {
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 user_id UUID REFERENCES users(id) ON DELETE CASCADE,
                 endpoint_code VARCHAR(50) UNIQUE NOT NULL,
+                name VARCHAR(200),
                 created_at TIMESTAMP DEFAULT NOW(),
                 is_active BOOLEAN DEFAULT true
             );

@@ -14,6 +14,7 @@ function App() {
   const { user, loading, logout, token } = useAuth();
 
   const [endpointId, setEndpointId] = useState(null);
+  const [endpointName, setEndpointName] = useState('');
   const [webhooks, setWebhooks] = useState([]); // Live webhooks (ephemeral)
   const [savedWebhooks, setSavedWebhooks] = useState([]); // Saved webhooks (persistent)
   const [isConnected, setIsConnected] = useState(false);
@@ -25,6 +26,7 @@ function App() {
   useEffect(() => {
     if (!user) {
       setEndpointId(null);
+      setEndpointName('');
       setWebhooks([]);
       setSavedWebhooks([]);
     }
@@ -42,6 +44,7 @@ function App() {
           if (response.data.success && response.data.endpoint) {
             const endpoint = response.data.endpoint;
             setEndpointId(endpoint.endpoint_code);
+            setEndpointName(endpoint.name || '');
             console.log('Loaded existing endpoint:', endpoint.endpoint_code);
           }
         } catch (error) {
@@ -125,6 +128,7 @@ function App() {
 
       if (response.data.success) {
         setEndpointId(randomId);
+        setEndpointName('');
         setWebhooks([]); // clear live webhooks
         setSavedWebhooks([]); // clear saved webhooks
         console.log('Endpoint registered:', randomId);
@@ -132,6 +136,26 @@ function App() {
     } catch (error) {
       console.error('Error registering endpoint:', error);
       alert(error.response?.data?.message || 'Failed to generate endpoint');
+    }
+  };
+
+
+  // update endpoint name
+  const updateEndpointName = async (newName) => {
+    try {
+      const response = await axios.patch(
+        `${API_URL}/api/endpoints/name`, 
+        { endpoint_code: endpointId, name: newName },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (response.data.success) {
+        setEndpointName(newName);
+        console.log('Endpoint name updated:', newName);
+      }
+    } catch (error) {
+      console.error('Error updating endpoint name:', error);
+      alert(error.response?.data?.message || 'Failed to update endpoint name');
     }
   };
 
@@ -311,16 +335,31 @@ function App() {
           ) : (
             <div className="endpoint-display">
               <h3>Your Endpoint:</h3>
+
+            <div className="endpoint-name-section">
+                <input
+                  type="text"
+                  value={endpointName}
+                  onChange={(e) => setEndpointName(e.target.value)}
+                  onBlur={() => updateEndpointName(endpointName)}
+                  placeholder="Click to add a name or description..."
+                  className="endpoint-name-input"
+                  maxLength={200}
+                />
+              </div>
+
               <div className="endpoint-url">
                 <code>{API_URL}/catch/{endpointId}</code>
                 <button onClick={copyToClipboard} className="btn-copy">
                   Copy
                 </button>
               </div>
+
               <button onClick={generateEndpoint} className="btn-secondary">
                 Generate New (Deletes Current)
               </button>
             </div>
+            
           )}
         </div>
 

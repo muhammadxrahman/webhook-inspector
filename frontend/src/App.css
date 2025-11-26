@@ -374,3 +374,28 @@ button {
 .curl-command::selection {
   background: #44475a;
 }
+
+/* Endpoint Name Section */
+.endpoint-name-section {
+  margin-bottom: 15px;
+}
+
+.endpoint-name-input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
+}
+
+.endpoint-name-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.endpoint-name-input::placeholder {
+  color: #999;
+  font-style: italic;
+}

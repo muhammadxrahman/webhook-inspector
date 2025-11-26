@@ -29,7 +29,7 @@ const io = new Server(server, {
 app.use(cors({
   origin: true,  // Allow all origins
   credentials: true,
-  methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
+  methods: ['GET', 'POST', 'DELETE', 'PUT', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
@@ -305,6 +305,48 @@ app.get('/api/endpoints/my-endpoint', authenticateToken, async (req, res) => {
       success: false, 
       message: 'Failed to fetch endpoint',
       error: error.message 
+    });
+  }
+});
+
+// update endpoint name (REQUIRES AUTH)
+app.patch('/api/endpoints/name', authenticateToken, async (req, res) => {
+  try {
+    const { endpoint_code, name } = req.body;
+    const userId = req.user.userId;
+
+    if (!endpoint_code) {
+      return res.status(400).json({
+        success: false,
+        message: 'endpoint_code is required'
+      });
+    }
+
+    const result = await pool.query(
+      'UPDATE endpoints SET name = $1 WHERE endpoint_code = $2 AND user_id = $3 RETURNING *',
+      [name || null, endpoint_code, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Endpoint not found or you do not have permission'
+      });
+    }
+
+    console.log('📝 Endpoint name updated:', endpoint_code);
+
+    res.json({
+      success: true,
+      endpoint: result.rows[0],
+      message: 'Endpoint name updated'
+    });
+  } catch (error) {
+    console.error('Error updating endpoint name:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update endpoint name',
+      error: error.message
     });
   }
 });
