@@ -1,105 +1,103 @@
-# LIVE SITE DEPLOYED: https://webhook-inspector-nine.vercel.app/
+# Webhook Inspector
 
-# 🎯 Webhook Inspector
+**Live Site:** https://webhook-inspector-nine.vercel.app/
 
-A real-time webhook inspection tool for developers. Receive, inspect, and debug webhooks during development.
+A real-time webhook inspection tool for developers. Receive, inspect, and debug webhooks during development with persistent storage and user authentication.
 
 ## Features
 
-- **Instant endpoint generation** - Get a public URL in one click
-- **Real-time updates** - See webhooks as they arrive via WebSockets
-- **Complete inspection** - View headers, body, and timestamps
-- **Built-in testing** - Send test webhooks directly from the UI
-- **Save functionality** - Persist important webhooks
-- **Rate limits** - Reasonable rate limits of features
-- **Authentication and Authorization** - User accounts with webhook data ownership
+- Real-time webhook reception and display via WebSockets
+- User authentication with secure JWT tokens
+- Persistent webhook storage (save up to 10 per endpoint)
+- One endpoint per user with instant generation
+- Comprehensive rate limiting on all routes
+- Full request inspection (headers, body, timestamps)
+- Built-in test webhook functionality
 
 ## Tech Stack
 
-**Frontend:**
-- React
-- Socket.IO Client
-- Axios
-
-**Backend:**
-- Node.js + Express
-- Socket.IO
-- PostgreSQL
-
-**Deployment:**
-- Railway
-- Vercel
+**Frontend:** React, Socket.IO Client, Axios  
+**Backend:** Node.js, Express, Socket.IO, PostgreSQL  
+**Deployment:** Vercel (frontend), Railway (backend + database)
 
 ## Project Structure
+```
+webhook-inspector/
+├── backend/
+│   ├── server.js
+│   ├── database.js
+│   ├── routes/
+│   ├── middleware/
+│   └── utils/
+├── frontend/
+│   └── src/
+│       ├── App.js
+│       ├── Auth.js
+│       └── AuthContext.js
+└── docker-compose.yml
+```
 
-- **backend/** - Express + Socket.IO server
-  - `server.js` - Main server file
-  - `db.js` - Database configuration
-  - `package.json`
-- **frontend/** - React application
-  - `src/`
-    - `App.js` - Main component
-    - `App.css` - Styles
-  - `package.json`
-- `README.md`
-
-## Getting Started
+## Local Development
 
 ### Prerequisites
 
-- Node.js (v18+)
-- PostgreSQL (v14+)
+- Node.js v18+
+- PostgreSQL v14+ (or Docker)
 - npm or yarn
 
-### Installation
+### Setup
 
-**1. Clone the repository:**
+1. Clone and install dependencies:
 ```bash
 git clone https://github.com/muhammadxrahman/webhook-inspector.git
 cd webhook-inspector
+cd backend && npm install
+cd ../frontend && npm install
 ```
-**2. Install backend dependencies:**
+2. Start PostgreSQL (using Docker):
 ```bash
-cd backend
-npm install
+docker compose up -d
 ```
-**3. Install frontend dependencies:**
-```bash
-cd ../frontend
-npm install
+3. Configure backend environment (`backend/.env`):
 ```
-**4. Set up environment variables:**
-
-Create a file called `.env` in the `backend` folder with the following content:
-```bash
 PORT=3001
 DATABASE_URL=postgresql://postgres:password@localhost:5432/webhook_inspector
-JWT_SECRET=<your-random-jwt-secret-string>
+JWT_SECRET=your-secret-key-here
+NODE_ENV=development
 ```
-**5. Start the backend:**
+4. Start services:
 ```bash
-cd backend
-npm run dev
+# Terminal 1 - Backend
+cd backend && npm run dev
+# Terminal 2 - Frontend
+cd frontend && npm start
 ```
-**6. Start the frontend in another terminal:**
-```bash
-cd frontend
-npm start
-```
-**7. Open http://localhost:3000**
+5. Open http://localhost:3000
 
 ## Usage
 
-1. Register an account
-2. Click **"Generate Endpoint"** to create a unique webhook URL
-3. Send webhooks to your generated URL:
-   - Use the built-in test button
-   - Configure third-party services (Stripe, GitHub, etc.) to send webhooks to your URL
-   - Send a test via cURL:
+1. Register an account or log in
+2. Generate your unique webhook endpoint
+3. Configure third-party services (GitHub, Stripe, etc.) to send webhooks to your endpoint
+4. View incoming webhooks in real-time
+5. Save important webhooks for later reference
+6. Delete saved webhooks as needed
+
+**Testing with cURL:**
 ```bash
-     curl -X POST <your-endpoint-url> \
-       -H "Content-Type: application/json" \
-       -d '{"test": "data"}'
+curl -X POST https://webhook-inspector-production-2c87.up.railway.app/catch/YOUR_ENDPOINT_ID \
+  -H "Content-Type: application/json" \
+  -d '{"test": "data"}'
 ```
-4. Watch webhooks appear in real-time!
-5. Save specific webhooks for persistent data and delete them whenever!
+
+## Rate Limits
+
+- Webhook reception: 10 requests/min per endpoint
+- Endpoint generation: 5 per hour per user
+- Webhook saves: 10 per minute per user
+- Login attempts: 5 per 15 minutes per IP
+- Registration: 3 per hour per IP
+
+## License
+
+MIT
