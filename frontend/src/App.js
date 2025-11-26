@@ -332,6 +332,30 @@ function App() {
               Send Test Webhook
             </button>
             <p className="hint">Or send a POST request to your endpoint from any tool, including cURL!</p>
+            
+            {/* Curl Block */}
+            <div className="curl-block">
+              <div className="curl-header">
+                <span>cURL Command:</span>
+                <button 
+                  onClick={() => {
+                    const curlCommand = `curl -X POST ${API_URL}/catch/${endpointId} \\
+          -H "Content-Type: application/json" \\
+          -d '{"event":"test","source":"curl","message":"Hello from terminal!"}'`;
+                    navigator.clipboard.writeText(curlCommand);
+                    alert('cURL command copied to clipboard!');
+                  }}
+                  className="btn-copy-curl"
+                >
+                  Copy
+                </button>
+              </div>
+              <pre className="curl-command">
+        {`curl -X POST ${API_URL}/catch/${endpointId} \\
+          -H "Content-Type: application/json" \\
+          -d '{"event":"test","source":"curl","message":"Hello from terminal!"}'`}
+              </pre>
+            </div>
           </div>
         )}
 

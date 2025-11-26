@@ -319,3 +319,58 @@ button {
   background: #c82333;
   transform: translateY(-1px);
 }
+
+/* cURL Command Block */
+.curl-block {
+  margin-top: 20px;
+  background: #1e1e1e;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.curl-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #2d2d2d;
+  border-bottom: 1px solid #3d3d3d;
+}
+
+.curl-header span {
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.btn-copy-curl {
+  background: #28a745;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+.btn-copy-curl:hover {
+  background: #218838;
+}
+
+.curl-command {
+  margin: 0;
+  padding: 16px;
+  color: #f8f8f2;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.curl-command::selection {
+  background: #44475a;
+}
