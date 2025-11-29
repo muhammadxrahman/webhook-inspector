@@ -88,6 +88,78 @@ app.get('/', (req, res) => {
     });
 });
 
+
+// Validation rules helper funcs
+
+// key exist in obj?
+const hasKey = (obj, targetKey) => {
+  if (typeof obj !== 'object' || obj === null) {
+    return false;
+  }
+
+  if (targetKey in obj) {
+    return true;
+  }
+
+  // if nested
+  for (let key in obj) {
+    if (hasKey(obj[key], targetKey)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+// Validate webhook against rules
+const validateWebhook = async (endpoint_id, headers, body) => {
+  try {
+    const rulesResult = await pool.query(
+      'SELECT * from validation_rules WHERE endpoint_id = $1',
+      [endpoint_id]
+    );
+
+    const rules = rulesResult.rows;
+
+    if (rules.length === 0) {
+      return {
+        passed: true,
+        errors: null
+      };
+    }
+
+    const errors = [];
+
+    for (let rule of rules) {
+      if (rule.rule_type === 'required_key') {
+        if (!hasKey(body, rule.field_name)) {
+          errors.push(`Missing required key: ${rule.field_name}`);
+        }
+      } else if (rule.rule_type === 'required_header') {
+        const headerExists = queryObjects.keys(headers).some(
+          h => h.toLowerCase() === rule.field_name.toLowerCase()
+        );
+        if (!headerExists) {
+          errors.push(`Missing required header: ${rule.field_name}`);
+        }
+      }
+    }
+
+    return {
+      passed: errors.length === 0,
+      errors: errors.length > 0 ? errors.join('; ') : null
+    };
+
+  } catch (error) {
+    console.error('Error validating webhook:', error);
+    return {
+      passed: true,
+      errors: []
+    };
+  }
+};
+
+
 // webhook endpoint, rate limited
 app.post('/catch/:endpoint_id', webhookRateLimit, (req, res) => {
     const {endpoint_id} = req.params;
@@ -387,6 +459,154 @@ app.delete('/api/webhooks/:webhook_id', authenticateToken, async (req, res) => {
     });
   }
 });
+
+
+// Validation rules endpoints
+
+app.get('/api/validation-rules', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const endpointResult = await pool.query(
+      'SELECT id FROM endpoints WHERE user_id = $1',
+      [userId]
+    );
+
+    if (endpointResult.rows.length === 0) {
+      return res.json({
+        success: true,
+        rules: []
+      });
+    }
+
+    const endpoint_id = endpointResult.rows[0].id;
+
+    const rulesResult = await pool.query(
+      'SELECT * from validation_rules WHERE endpoint_id = $1 ORDER BY created_at ASC',
+      [endpoint_id]
+    );
+
+    res.json({
+      success: true,
+      rules: result.rows
+    });
+
+  } catch (error) {
+    console.error('Error fetching validation rules:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch validation rules',
+      error: error.message
+    });
+  }
+});
+
+
+app.post('/api/validation-rules', authenticateToken, async (req, res) => {
+  try {
+    const { rule_type, field_name } = req.body;
+    const userId = req.user.userId;
+
+    if (!rule_type || !field_name) {
+      return res.status(400).json({
+        success: false,
+        message: 'rule_type and field_name are required'
+      });
+    }
+
+    const validTypes = ['required_key', 'required_header'];
+    if (!validTypes.includes(rule_type)) {
+      return res.status(400).json({
+        success: false,
+        message: 'rule_type must be either "required_key" or "required_header"'
+      });
+    }
+
+    const endpointResult = await pool.query(
+      'SELECT id FROM endpoints WHERE user_id = $1',
+      [userId]
+    );
+
+    if (endpointResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No endpoint found. Generate an endpoint first.'
+      });
+    }
+
+    const endpointId = endpointResult.rows[0].id;
+
+    const existing = await pool.query(
+      'SELECT * FROM validation_rules WHERE endpoint_id = $1 AND rule_type = $2 AND field_name = $3',
+      [endpointId, rule_type, field_name]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'This validation rule already exists'
+      });
+    }
+
+    const result = await pool.query(
+      'INSERT INTO validation_rules (endpoint_id, rule_type, field_name) VALUES ($1, $2, $3) RETURNING *',
+      [endpointId, rule_type, field_name]
+    );
+
+    console.log('Validation rule created:', rule_type, field_name);
+
+    res.json({
+      success: true,
+      message: 'Validation rule created',
+      rule: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error creating validation rule:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create validation rule',
+      error: error.message
+    });
+  }
+});
+
+
+app.delete('/api/validation-rules/:ruleId', authenticateToken, async (req, res) => {
+  try {
+    const { ruleId } = req.params;
+    const userId = req.user.userId;
+
+    const result = await pool.query(
+      `DELETE FROM validation_rules 
+       WHERE id = $1 
+       AND endpoint_id IN (SELECT id FROM endpoints WHERE user_id = $2)
+       RETURNING *`,
+      [ruleId, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Validation rule not found or you do not have permission'
+      });
+    }
+
+    console.log('Validation rule deleted:', ruleId);
+
+    res.json({
+      success: true,
+      message: 'Validation rule deleted'
+    });
+  } catch (error) {
+    console.error('Error deleting validation rule:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete validation rule',
+      error: error.message
+    });
+  }
+});
+
 
 // init db then start server
 initDB()

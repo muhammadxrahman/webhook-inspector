@@ -38,6 +38,19 @@ const initDB = async () => {
         console.log('Endpoints table ready');
 
 
+        // validation rules table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS validation_rules (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                endpoint_id UUID REFERENCES endpoints(id) ON DELETE CASCADE,
+                rule_type VARCHAR(50) NOT NULL,
+                field_name VARCHAR(200) NOT NULL,
+                created_at TIMESTAMP DEFAULT NOW()
+            );
+        `);
+        console.log('Validation rules table ready');
+
+
         // saved webhooks table
         await client.query(`
             CREATE TABLE IF NOT EXISTS saved_webhooks (
@@ -47,10 +60,22 @@ const initDB = async () => {
                 headers JSONB,
                 body JSONB,
                 timestamp TIMESTAMP NOT NULL,
+                passed_validation BOOLEAN DEFAULT true,
+                validation_errors TEXT,
                 saved_at TIMESTAMP DEFAULT NOW()
             );
         `);
+
         console.log('Saved webhooks table ready');
+
+        // For preexisting webhooks
+        await client.query(`
+            ALTER TABLE saved_webhooks
+            ADD COLUMN IF NOT EXISTS passed_validation BOOLEAN DEFAULT true,
+            ADD COLUMN IF NOT EXISTS validation_errors TEXT;
+        `);
+
+        console.log('DB migrations complete')
 
         console.log('Database initialization complete');
     } catch (error) {
