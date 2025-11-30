@@ -83,13 +83,13 @@ PORT=3001
 DATABASE_URL=postgresql://postgres:password@localhost:5432/webhook_inspector
 JWT_SECRET=your-secret-key-here
 NODE_ENV=development
+```
 
 Generate a secure JWT secret:
 ```bash
 node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
 
-```
 4. Start services:
 ```bash
 # Terminal 1 - Backend
