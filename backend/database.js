@@ -71,6 +71,11 @@ const initDB = async () => {
       ADD COLUMN IF NOT EXISTS validation_errors TEXT;
     `);
 
+    await client.query(`
+    ALTER TABLE endpoints
+    ADD COLUMN IF NOT EXISTS name VARCHAR(200);
+    `);
+
     // Migrate existing TIMESTAMP columns to TIMESTAMPTZ
     await client.query(`
       DO $$ 
