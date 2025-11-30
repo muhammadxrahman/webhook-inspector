@@ -137,13 +137,12 @@ button {
 }
 
 /* Webhooks Display */
-.empty-state {
-  text-align: center;
+.waiting {
   color: #6c757d;
-  font-size: 18px;
-  padding: 40px;
-  background: #f8f9fa;
-  border-radius: 8px;
+  font-style: italic;
+  font-size: 14px;
+  margin-top: 10px;
+  margin-bottom: 0;
 }
 
 .webhooks-list {
@@ -398,4 +397,163 @@ button {
 .endpoint-name-input::placeholder {
   color: #999;
   font-style: italic;
+}
+
+/* Validation Rules Section */
+.validation-rules-section {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+}
+
+.validation-rules-section h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.validation-rules-section .hint {
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #666;
+}
+
+.add-rule-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.rule-type-select {
+  padding: 10px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  min-width: 200px;
+}
+
+.rule-type-select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.rule-field-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.rule-field-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.btn-add-rule {
+  padding: 10px 20px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.3s ease;
+}
+
+.btn-add-rule:hover {
+  background: #218838;
+}
+
+.rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rule-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  padding: 12px 16px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.rule-badge {
+  font-size: 18px;
+}
+
+.rule-text {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+}
+
+.rule-text strong {
+  color: #667eea;
+  font-family: 'Courier New', monospace;
+}
+
+.btn-delete-rule {
+  background: none;
+  border: none;
+  color: #dc3545;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.btn-delete-rule:hover {
+  background: #ffe0e0;
+}
+
+.no-rules-message {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  margin: 20px 0;
+}
+
+/* Validation Indicators */
+.webhook-card {
+  position: relative;
+}
+
+.webhook-card.validation-failed {
+  border-left: 4px solid #ffc107;
+  background: #fffbf0;
+}
+
+.validation-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 24px;
+  cursor: help;
+}
+
+.validation-error-message {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  color: #856404;
+}
+
+.validation-error-message strong {
+  color: #856404;
 }
