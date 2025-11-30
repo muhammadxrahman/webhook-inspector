@@ -121,10 +121,28 @@ const registerRateLimit = (req, res, next) => {
   next();
 };
 
+const validationRulesRateLimit = (req, res, next) => {
+  const userId = req.user.userId;
+  const key = `validation:rules:${userId}`;
+
+  const allowed = rateLimiter.isAllowed(key, 20, 60 * 1000);
+
+  if (!allowed) {
+    const info = rateLimiter.getInfo(key, 20, 60 * 1000);
+    return res.status(429).json({
+      success: false,
+      message: 'Rate limit exceeded for validation rules. Max 20 requests per minute.',
+      retryAfter: info.retryAfter
+    });
+  }
+  next();
+}
+
 module.exports = { 
   webhookRateLimit, 
   endpointGenerationRateLimit, 
   saveWebhookRateLimit,
   loginRateLimit,
-  registerRateLimit
+  registerRateLimit,
+  validationRulesRateLimit
 };

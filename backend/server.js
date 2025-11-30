@@ -625,6 +625,21 @@ app.post("/api/validation-rules", authenticateToken, async (req, res) => {
 
     const endpointId = endpointResult.rows[0].id;
 
+    // validation rules count (MAX 20)
+    const countResult = await pool.query(
+      'SELECT COUNT(*) FROM validation_rules WHERE endpoint_id = $1',
+      [endpointId]
+    );
+
+    const rulesCount = parseInt(countResult.rows[0].count);
+
+    if (rulesCount >= 20) {
+      return res.status(400).json({
+        success: false,
+        message: 'Maximum 20 validation rules per endpoint. Delete some rules first.'
+      });
+    } 
+
     const existing = await pool.query(
       "SELECT * FROM validation_rules WHERE endpoint_id = $1 AND rule_type = $2 AND field_name = $3",
       [endpointId, rule_type, field_name]
