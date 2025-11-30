@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
+const helmet = require("helmet");
 const { Server } = require("socket.io");
 const { pool, initDB } = require("./database");
 const authRoutes = require("./routes/auth");
@@ -9,6 +10,7 @@ const {
   webhookRateLimit,
   endpointGenerationRateLimit,
   saveWebhookRateLimit,
+  validationRulesRateLimit
 } = require("./middleware/rateLimitMiddleware");
 
 require("dotenv").config();
@@ -37,6 +39,12 @@ if (process.env.NODE_ENV === 'production') {
     next();
   });
 }
+
+// helmet for security headers
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
 
 // CORS configuration - allow all origins (webhooks can come from anywhere)
 app.use(
@@ -591,7 +599,7 @@ app.get("/api/validation-rules", authenticateToken, async (req, res) => {
   }
 });
 
-app.post("/api/validation-rules", authenticateToken, async (req, res) => {
+app.post("/api/validation-rules", authenticateToken, validationRulesRateLimit, async (req, res) => {
   try {
     const { rule_type, field_name } = req.body;
     const userId = req.user.userId;
