@@ -161,34 +161,83 @@ const validateWebhook = async (endpoint_id, headers, body) => {
 
 
 // webhook endpoint, rate limited
-app.post('/catch/:endpoint_id', webhookRateLimit, (req, res) => {
-    const {endpoint_id} = req.params;
+app.post('/catch/:endpoint_id', webhookRateLimit, async (req, res) => {
+  const { endpoint_id } = req.params;
+  const headers = req.headers;
+  const body = req.body;
+  const timestamp = new Date().toISOString();
 
+  console.log('\nWebhook has been received!');
+  console.log('Endpoint ID:', endpoint_id);
+  console.log('Headers:', headers);
+  console.log('Body:', body);
+  console.log('Timestamp:', timestamp);
+
+  try {
+    const result = await pool.query(
+      'SELECT id FROM endpoints WHERE endpoint_code = $1',
+      [endpoint_id]
+    );
+
+    let validationResult = { passed: true, errors: null };
+
+    // only validate if endpoint exists in database
+    if (result.rows.length > 0) {
+      const dbEndpointId = result.rows[0].id;
+      validationResult = await validateWebhook(dbEndpointId, headers, body);
+      
+      if (!validationResult.passed) {
+        console.log('⚠️ Webhook failed validation:', validationResult.errors);
+      } else {
+        console.log('✅ Webhook passed validation');
+      }
+    }
+
+    // prep webhook data with validation results
     const webhookData = {
       id: Date.now(),
       endpoint_id,
-      headers: req.headers,
-      body: req.body,
-      timestamp: new Date().toISOString()
+      headers,
+      body,
+      timestamp,
+      passed_validation: validationResult.passed,
+      validation_errors: validationResult.errors
     };
-    
-    console.log('\n Webhook has been recieved!');
-    console.log('Endpoint ID:', endpoint_id);
-    console.log('Headers:', req.headers);
-    console.log('Body:', req.body);
-    console.log('Timestamp:', webhookData.timestamp);
-    console.log('---\n');
 
-    // broadcast to clients watching this endpoint
+    // Broadcast to clients watching this endpoint
     io.to(endpoint_id).emit('webhook', webhookData);
     console.log(`Broadcasted to endpoint room: ${endpoint_id}`);
+    console.log('---\n');
 
-    res.json({ 
-    success: true, 
-    message: 'Webhook received',
-    endpoint_id 
-  });
+    res.json({
+      success: true,
+      message: 'Webhook received',
+      endpoint_id,
+      passed_validation: validationResult.passed
+    });
+  } catch (error) {
+    console.error('Error processing webhook:', error);
     
+    // still broadcast even if validation fails 
+    const webhookData = {
+      id: Date.now(),
+      endpoint_id,
+      headers,
+      body,
+      timestamp,
+      passed_validation: true, // default to true on error
+      validation_errors: null
+    };
+    
+    io.to(endpoint_id).emit('webhook', webhookData);
+    console.log('---\n');
+
+    res.json({
+      success: true,
+      message: 'Webhook received',
+      endpoint_id
+    });
+  }
 });
 
 
@@ -280,7 +329,6 @@ app.post('/api/webhooks/save', authenticateToken, saveWebhookRateLimit, async (r
       });
     }
 
-    // Check if already saved
     const existing = await pool.query(
       'SELECT * FROM saved_webhooks WHERE endpoint_id = $1 AND timestamp = $2',
       [endpoint_id, timestamp]
@@ -296,10 +344,18 @@ app.post('/api/webhooks/save', authenticateToken, saveWebhookRateLimit, async (r
 
     // Save webhook with user_id
     const result = await pool.query(
-      `INSERT INTO saved_webhooks (endpoint_id, user_id, headers, body, timestamp)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO saved_webhooks (endpoint_id, user_id, headers, body, timestamp, passed_validation, validation_errors)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [endpoint_id, userId, JSON.stringify(headers), JSON.stringify(body), timestamp]
+      [
+        endpoint_id, 
+        userId, 
+        JSON.stringify(headers), 
+        JSON.stringify(body), 
+        timestamp, 
+        passed_validation !== undefined ? passed_validation : true, 
+        validation_errors || null
+      ]
     );
 
     console.log('Webhook saved to database');
