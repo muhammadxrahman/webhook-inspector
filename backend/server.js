@@ -27,6 +27,17 @@ const io = new Server(server, {
 });
 
 // Middleware
+
+// https redirect on prod
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.header('x-forwarded-proto') !== 'https') {
+      return res.redirect(301, `https://${req.header('host')}${req.url}`);
+    }
+    next();
+  });
+}
+
 // CORS configuration - allow all origins (webhooks can come from anywhere)
 app.use(
   cors({
@@ -161,6 +172,19 @@ const validateWebhook = async (endpoint_id, headers, body) => {
     };
   }
 };
+
+// sanitizer
+const sanitizeEndpointName = (name) => {
+  if (!name) return '';
+  let sanitized = name.replace(/<[^>]*>/g, ''); // remove HTML tags
+  sanitized = sanitized.replace(/[^\w\s\-_().,!?]/g, ''); // allow only certain chars
+  sanitized = sanitized.trim();
+
+  if (sanitized. length > 200) {
+    sanitized = sanitized.substring(0, 200);
+  }
+  return sanitized;
+}
 
 // webhook endpoint, rate limited
 app.post("/catch/:endpoint_id", webhookRateLimit, async (req, res) => {
@@ -462,9 +486,11 @@ app.patch("/api/endpoints/name", authenticateToken, async (req, res) => {
       });
     }
 
+    let sanitizedName = sanitizeEndpointName(name);
+
     const result = await pool.query(
       "UPDATE endpoints SET name = $1 WHERE endpoint_code = $2 AND user_id = $3 RETURNING *",
-      [name || null, endpoint_code, userId]
+      [sanitizedName || null, endpoint_code, userId]
     );
 
     if (result.rows.length === 0) {
@@ -474,7 +500,7 @@ app.patch("/api/endpoints/name", authenticateToken, async (req, res) => {
       });
     }
 
-    console.log("📝 Endpoint name updated:", endpoint_code);
+    console.log("Endpoint name updated:", endpoint_code);
 
     res.json({
       success: true,
@@ -677,7 +703,7 @@ app.delete(
 initDB()
   .then(() => {
     server.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`Server running on http://localhost:${PORT}`);
       console.log("Socket.IO ready");
       console.log("Database connected");
     });

@@ -44,6 +44,14 @@ function App() {
     return date.toLocaleString();
   };
 
+  const sanitizeInput = (value) => {
+    // remove HTML tags
+    let sanitized = value.replace(/<[^>]*>/g, '');
+    // remove dangerous characters
+    sanitized = sanitized.replace(/[^\w\s\-_().,!?]/g, '');
+    return sanitized;
+  }
+
   const loadValidationRules = useCallback(async () => {
     try {
       const response = await axios.get(`${API_URL}/api/validation-rules`, {
@@ -436,7 +444,7 @@ function App() {
                 <input
                   type="text"
                   value={endpointName}
-                  onChange={(e) => setEndpointName(e.target.value)}
+                  onChange={(e) => setEndpointName(sanitizeInput(e.target.value))}
                   onBlur={() => updateEndpointName(endpointName)}
                   placeholder="Click to add a name or description..."
                   className="endpoint-name-input"

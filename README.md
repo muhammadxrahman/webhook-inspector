@@ -13,6 +13,7 @@ A real-time webhook inspection tool for developers. Receive, inspect, and debug 
 - Comprehensive rate limiting on all routes
 - Full request inspection (headers, body, timestamps)
 - Built-in test webhook functionality
+- Webhook validation rules for header and body keys
 
 ## Tech Stack
 
